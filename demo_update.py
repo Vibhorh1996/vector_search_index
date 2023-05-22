@@ -37,6 +37,7 @@ uploaded_files = st.file_uploader("Choose one or more PDF files", type="pdf", ac
 # Create a button to start parsing
 if st.button("Parse"):
     if uploaded_files:
+        summaries = []  # Store summaries for each PDF file
         for uploaded_file in uploaded_files:
             # Create a PdfParser object for each uploaded file
             pdf_parser = PdfParser(uploaded_file)
@@ -51,6 +52,14 @@ if st.button("Parse"):
 
             # Display a success message
             st.success(f"Extracted data from {input_filename} has been written to {output_filename}.")
+
+        st.markdown("---")
+        if st.checkbox("Show Summaries"):
+            for uploaded_file in uploaded_files:
+                # Generate a summary for the parsed PDF file
+                input_filename = Path(uploaded_file.name)
+                summary = f"Summary of {input_filename}: {pdf_parser.get_summary(50)}"
+                st.write(summary)
     
     else:
         # Display an error message if no file was uploaded
@@ -87,17 +96,3 @@ if st.button("Search"):
             # Display additional details about the search result if needed
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
-
-# Create a checkbox to show the summary
-show_summary = st.checkbox("Show Summary")
-
-# Display the summary of parsed PDF files if the checkbox is selected
-if show_summary:
-    for uploaded_file in uploaded_files:
-        input_filename = Path(uploaded_file.name)
-        output_filename = input_filename.stem + ".json"
-        with open(output_filename, 'r') as json_file:
-            parsed_data = json.load(json_file)
-            st.markdown(f"**Summary of {input_filename}:**")
-            st.write(parsed_data)
-            st.markdown("---")
