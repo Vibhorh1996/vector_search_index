@@ -93,13 +93,13 @@ if st.button("Search"):
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
 
-# Create a checkbox to show summaries
-show_summaries = st.checkbox("Show Summaries")
+# # Create a checkbox to show summaries
+# show_summaries = st.checkbox("Show Summaries")
 
-# Display summaries when checkbox is checked
-if show_summaries and uploaded_files:
-    for i, (input_filename, summary) in enumerate(summaries):
-        st.write(f"PDF: {input_filename}")
-        st.write(summary)
-        if i < len(uploaded_files) - 1:  # Add a horizontal line if it's not the last file
-            st.markdown("---")
+# # Display summaries when checkbox is checked
+# if show_summaries and uploaded_files:
+#     for i, (input_filename, summary) in enumerate(summaries):
+#         st.write(f"PDF: {input_filename}")
+#         st.write(summary)
+#         if i < len(uploaded_files) - 1:  # Add a horizontal line if it's not the last file
+#             st.markdown("---")
