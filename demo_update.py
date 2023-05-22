@@ -51,6 +51,7 @@ if st.button("Parse"):
 
             # Display a success message
             st.success(f"Extracted data from {input_filename} has been written to {output_filename}.")
+    
     else:
         # Display an error message if no file was uploaded
         st.error("Please upload one or more PDF files.")
@@ -86,3 +87,17 @@ if st.button("Search"):
             # Display additional details about the search result if needed
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
+
+# Create a checkbox to show the summary
+show_summary = st.checkbox("Show Summary")
+
+# Display the summary of parsed PDF files if the checkbox is selected
+if show_summary:
+    for uploaded_file in uploaded_files:
+        input_filename = Path(uploaded_file.name)
+        output_filename = input_filename.stem + ".json"
+        with open(output_filename, 'r') as json_file:
+            parsed_data = json.load(json_file)
+            st.markdown(f"**Summary of {input_filename}:**")
+            st.write(parsed_data)
+            st.markdown("---")
