@@ -50,6 +50,11 @@ if st.button("Parse"):
             output_filename = input_filename.stem + ".json"
             pdf_parser.write_json(output_filename)
 
+            # Extract a short brief from the PDF
+            # Modify this section to extract the summary/brief from the parsed PDF
+            summary = "Summary: [Summary of the PDF in at most 50 words]"
+            summaries.append((input_filename, summary))
+
             # Display a success message
             st.success(f"Extracted data from {input_filename} has been written to {output_filename}.")
     else:
@@ -92,10 +97,9 @@ if st.button("Search"):
 show_summaries = st.checkbox("Show Summaries")
 
 # Display summaries when checkbox is checked
-if show_summaries:
-    for i, uploaded_file in enumerate(uploaded_files):
-        input_filename = Path(uploaded_file.name)
+if show_summaries and uploaded_files:
+    for i, (input_filename, summary) in enumerate(summaries):
         st.write(f"PDF: {input_filename}")
-        st.write(f"Summary: [Summary of the PDF in at most 50 words]")
+        st.write(summary)
         if i < len(uploaded_files) - 1:  # Add a horizontal line if it's not the last file
             st.markdown("---")
