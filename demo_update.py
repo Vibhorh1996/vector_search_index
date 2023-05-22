@@ -14,7 +14,7 @@ This is a Streamlit-based application that works as a frontend for building a ve
 # Set page title and header using Streamlit Markdown
 #st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
 st.markdown("# PDF Parser and Search")
-st.markdown("Upload one or more PDF files and click the button 'Parse' to parse them and dump the extracted data as JSON. "
+st.markdown("Upload one or more PDF files and click the 'Parse' button to parse them and dump the extracted data as JSON. "
             "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
             "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index.")
 
