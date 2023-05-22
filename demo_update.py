@@ -8,11 +8,11 @@ from src.parse_document import PdfParser
 from src.indexer import FaissIndexer
 
 """
-This is a streamlit based application which works as a frontend for building vector search index
+This is a Streamlit-based application that works as a frontend for building a vector search index.
 """
 
 # Set page title and header using Streamlit Markdown
-#st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
+st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
 st.markdown("# PDF Parser and Search")
 st.markdown("Upload one or more PDF files and click the button to parse them and dump the extracted data as JSON. "
             "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
@@ -20,7 +20,16 @@ st.markdown("Upload one or more PDF files and click the button to parse them and
 
 # Set the OpenAI API key using Streamlit text input
 openai_api_key = st.text_input("Enter your OpenAI API key:")
-st.write("Selected GPT model: GPT-3.5" if st.checkbox("Use GPT-3.5") else "Selected GPT model: GPT-4")
+if not openai_api_key:
+    st.warning("Please enter your OpenAI API key to proceed.")
+
+# Create checkboxes to select the GPT model
+use_gpt35 = st.checkbox("Use GPT-3.5", value=True)
+use_gpt4 = st.checkbox("Use GPT-4")
+
+# Determine the selected GPT model
+selected_model = "GPT-3.5" if use_gpt35 else "GPT-4"
+st.write(f"Selected GPT model: {selected_model}")
 
 # Create a file uploader for multiple files
 uploaded_files = st.file_uploader("Choose one or more PDF files", type="pdf", accept_multiple_files=True)
