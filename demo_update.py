@@ -52,15 +52,6 @@ if st.button("Parse"):
 
             # Display a success message
             st.success(f"Extracted data from {input_filename} has been written to {output_filename}.")
-
-        st.markdown("---")
-        if st.checkbox("Show Summaries"):
-            for uploaded_file in uploaded_files:
-                # Generate a summary for the parsed PDF file
-                input_filename = Path(uploaded_file.name)
-                summary = f"Summary of {input_filename}: {pdf_parser.get_summary(50)}"
-                st.write(summary)
-    
     else:
         # Display an error message if no file was uploaded
         st.error("Please upload one or more PDF files.")
@@ -96,3 +87,15 @@ if st.button("Search"):
             # Display additional details about the search result if needed
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
+
+# Create a checkbox to show summaries
+show_summaries = st.checkbox("Show Summaries")
+
+# Display summaries when checkbox is checked
+if show_summaries:
+    for i, uploaded_file in enumerate(uploaded_files):
+        input_filename = Path(uploaded_file.name)
+        st.write(f"PDF: {input_filename}")
+        st.write(f"Summary: [Summary of the PDF in at most 50 words]")
+        if i < len(uploaded_files) - 1:  # Add a horizontal line if it's not the last file
+            st.markdown("---")
