@@ -4,4 +4,3 @@ faiss-cpu==1.7.1
 PyPDF2==1.26.0
 sentence-transformers==2.0.0
 huggingface_hub==0.0.19
-openai==0.30.0
