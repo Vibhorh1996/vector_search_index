@@ -12,7 +12,7 @@ This is a streamlit based application which works as a frontend for building vec
 """
 
 # Set page title and header using Streamlit Markdown
-st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
+#st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
 st.markdown("# PDF Parser and Search")
 st.markdown("Upload one or more PDF files and click the button to parse them and dump the extracted data as JSON. "
             "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
