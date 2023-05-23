@@ -6,6 +6,7 @@ from pathlib import Path
 import faiss
 from src.parse_document import PdfParser
 from src.indexer import FaissIndexer
+import openai
 
 """
 This is a Streamlit-based application that works as a frontend for building a vector search index.
@@ -32,6 +33,9 @@ def get_openai_api_key():
 
 # Get the OpenAI API key
 openai_api_key = get_openai_api_key()
+
+# Initialize the OpenAI API
+openai.api_key = openai_api_key
 
 # Create a file uploader for multiple files
 uploaded_files = st.file_uploader(
@@ -81,17 +85,37 @@ if st.button("Build Index"):
 # Create a search query input box and search button
 query = st.text_input("Enter a search query:")
 if st.button("Search"):
-    # Search the index using the query
-    indexer = FaissIndexer.load_index("./tmp.index")  # Load the index and assign it to the indexer variable
+    # Load the Faiss index
+    indexer = FaissIndexer.load_index("./tmp.index")
 
-    if indexer:  # Check if index was successfully loaded
+    if indexer:
         st.markdown('**:blue[Loaded index from: tmp.index]**')
-        D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
+        D, I, search_results = indexer.search_index(query)
 
-        # Display the search results in a conversational chatbot format
+        # Prepare messages for conversation with the AI
+        messages = [
+            {"role": "system", "content": "You are now chatting with the AI."},
+            {"role": "user", "content": query},
+        ]
+
+        # Iterate over the search results and add them to the conversation
+        for i, result in enumerate(search_results):
+            messages.append({"role": "assistant", "content": result})
+
+        # Generate responses using the OpenAI language model
+        response = openai.ChatCompletion.create(
+            model=gpt_model,
+            messages=messages,
+        )
+
+        # Extract the assistant's reply from the response
+        assistant_reply = response.choices[0].message.content
+
+        # Display the search results and the assistant's reply
         st.markdown(f"**Q: {query}**")
         for i, result in enumerate(search_results):
             st.markdown(result)
-        # Display additional details about the search result if needed
+        st.markdown(f"**A: {assistant_reply}**")
+
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
