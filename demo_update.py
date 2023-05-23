@@ -2,15 +2,23 @@ import json
 import PyPDF2
 import streamlit as st
 from pathlib import Path
+import faiss
+from src.parse_document import PdfParser
+from src.indexer import FaissIndexer
 import openai
 
 """
-This is a Streamlit-based application that allows users to ask questions to the AI based on uploaded PDF files.
+This is a Streamlit-based application that works as a frontend for building a vector search index.
 """
 
 # Set page title and header using Streamlit Markdown
-st.markdown("# PDF Chatbot")
-st.markdown("Upload one or more PDF files and ask questions to get responses from the AI.")
+# st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
+st.markdown("# PDF Parser and Search")
+st.markdown(
+    "Upload one or more PDF files and click the 'Parse' button to parse them and dump the extracted data as JSON. "
+    "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
+    "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index."
+)
 
 # Function to get the OpenAI API key
 def get_openai_api_key():
@@ -30,60 +38,78 @@ uploaded_files = st.file_uploader(
     "Choose one or more PDF files", type="pdf", accept_multiple_files=True
 )
 
-# Create a button to start the chatbot
-if st.button("Start Chatbot"):
+# Create a button to start parsing
+if st.button("Parse"):
     if uploaded_files:
-        # Process each uploaded PDF file
+        summaries = []  # Store summaries for each PDF file
         for uploaded_file in uploaded_files:
-            st.markdown(f"## PDF: {uploaded_file.name}")
-            
-            # Read the PDF file
-            pdf_reader = PyPDF2.PdfFileReader(uploaded_file)
-            num_pages = pdf_reader.numPages
+            # Create a PdfParser object for each uploaded file
+            pdf_parser = PdfParser(uploaded_file)
 
-            # Extract text from each page
-            pdf_text = ""
-            for page_num in range(num_pages):
-                page = pdf_reader.getPage(page_num)
-                pdf_text += page.extractText()
+            # Parse the PDF file
+            pdf_parser.parse_pdf()
 
-            # Prepare messages for conversation with the AI
-            messages = [
-                {"role": "system", "content": "You are now chatting with the AI."},
-            ]
+            # Write the extracted data to a JSON file with the same name as the PDF file
+            input_filename = Path(uploaded_file.name)
+            output_filename = input_filename.stem + ".json"
+            pdf_parser.write_json(output_filename)
 
-            # Ask questions and get responses from the AI
-            while True:
-                user_query = st.text_input(
-                    "User:",
-                    key=f"query_{uploaded_file.name}_{id(st)}"
-                )
-                if user_query:
-                    # Add user query to the conversation
-                    messages.append({"role": "user", "content": user_query})
+            # Extract a short brief from the PDF
+            # Modify this section to extract the summary/brief from the parsed PDF
+            summary = "Summary: [Summary of the PDF in at most 50 words]"
+            summaries.append((input_filename, summary))
 
-                    # Generate AI response using OpenAI language model
-                    response = openai.Completion.create(
-                        engine="text-davinci-003",
-                        prompt=messages,
-                        max_tokens=50,
-                        n=1,
-                        stop=None,
-                        temperature=0.7,
-                    )
-
-                    # Extract the AI's reply from the response
-                    ai_reply = response.choices[0].text.strip()
-
-                    # Add AI reply to the conversation
-                    messages.append({"role": "assistant", "content": ai_reply})
-
-                    # Display AI's reply
-                    st.text_area("AI:", value=ai_reply, key=f"reply_{uploaded_file.name}_{id(st)}")
-
-                if st.button(f"End Chat ({uploaded_file.name})", key=f"end_chat_{uploaded_file.name}_{id(st)}"):
-                    break
-
+            # Display a success message
+            st.success(f"Extracted data from {input_filename} has been written to {output_filename}.")
     else:
         # Display an error message if no file was uploaded
         st.error("Please upload one or more PDF files.")
+
+# Create a button to build the Faiss index
+if st.button("Build Index"):
+    # Define the list of JSON files to index
+    json_files = [str(Path(file.name).stem) + ".json" for file in uploaded_files]
+
+    # Create a Faiss indexer object and build the index
+    indexer = FaissIndexer(json_files)
+    indexer.build_index()
+
+    if indexer:
+        indexer.save_index("./tmp.index")
+        st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index]**")
+
+# Create a search query input box and search button
+query = st.text_input("Enter a search query:")
+if st.button("Search"):
+    # Load the Faiss index
+    indexer = FaissIndexer.load_index("./tmp.index")
+
+    if indexer:
+        st.markdown('**:blue[Loaded index from: tmp.index]**')
+        D, I, search_results = indexer.search_index(query)
+
+        # Prepare messages for conversation with the AI
+        messages = [
+            {"role": "system", "content": "You are now chatting with the AI."},
+            {"role": "user", "content": query},
+        ]
+
+        # Iterate over the search results and add them to the conversation
+        for i, result in enumerate(search_results):
+            messages.append({"role": "assistant", "content": result})
+
+        # Generate responses using the OpenAI language model
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+        )
+
+        # Extract the assistant's reply from the response
+        assistant_reply = response.choices[-1].message.content
+
+        # Display the assistant's reply
+        st.markdown(f"**Q: {query}**")
+        st.markdown(f"**A: {assistant_reply}**")
+
+    else:
+        st.error("Failed to load index. Please make sure the index has been built.")
