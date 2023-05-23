@@ -19,7 +19,7 @@ st.markdown("Upload one or more PDF files and click the 'Parse' button to parse 
             "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index.")
 
 # Set the OpenAI API key using Streamlit text input
-openai_api_key = st.text_input("Enter your OpenAI API key:")
+openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
 if not openai_api_key:
     st.warning("Please enter your OpenAI API key to proceed.")
 
@@ -92,14 +92,3 @@ if st.button("Search"):
             # Display additional details about the search result if needed
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
-
-# # Create a checkbox to show summaries
-# show_summaries = st.checkbox("Show Summaries")
-
-# # Display summaries when checkbox is checked
-# if show_summaries and uploaded_files:
-#     for i, (input_filename, summary) in enumerate(summaries):
-#         st.write(f"PDF: {input_filename}")
-#         st.write(summary)
-#         if i < len(uploaded_files) - 1:  # Add a horizontal line if it's not the last file
-#             st.markdown("---")
