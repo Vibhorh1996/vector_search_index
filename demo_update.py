@@ -20,6 +20,19 @@ st.markdown(
     "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index."
 )
 
+# Function to get the OpenAI API key
+def get_openai_api_key():
+    openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
+    if not openai_api_key:
+        st.warning("Please enter your OpenAI API key to proceed.")
+    return openai_api_key
+
+# Get the OpenAI API key
+openai_api_key = get_openai_api_key()
+
+# Initialize the OpenAI API
+openai.api_key = openai_api_key
+
 # Create a file uploader for multiple files
 uploaded_files = st.file_uploader(
     "Choose one or more PDF files", type="pdf", accept_multiple_files=True
