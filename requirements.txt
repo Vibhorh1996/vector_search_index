@@ -6,7 +6,7 @@ PyPDF2
 sentence-transformers
 huggingface_hub
 openai
-langchain
+langchain == 1.0.0
 streamlit_chat
 bs4
 pydantic
