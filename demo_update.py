@@ -23,9 +23,9 @@ openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
 if not openai_api_key:
     st.warning("Please enter your OpenAI API key to proceed.")
 
-# Create checkboxes to select the GPT model
-use_gpt35 = st.checkbox("Use GPT-3.5", value=True)
-use_gpt4 = st.checkbox("Use GPT-4")
+# # Create checkboxes to select the GPT model
+# use_gpt35 = st.checkbox("Use GPT-3.5", value=True)
+# use_gpt4 = st.checkbox("Use GPT-4")
 
 # Create radio buttons to select the GPT model
 selected_model = st.radio("Select GPT model:", options=["GPT-3.5", "GPT-4"])
