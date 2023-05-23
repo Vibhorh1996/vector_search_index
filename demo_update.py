@@ -26,21 +26,7 @@ if not openai_api_key:
     st.warning("Please enter your OpenAI API key to proceed.")
 
 # Create checkboxes to select the GPT model
-use_gpt35 = st.checkbox("Use GPT-3.5", value=True)
-use_gpt4 = st.checkbox("Use GPT-4")
-
-# Handle checkbox selection
-if use_gpt35 and use_gpt4:
-    # If both checkboxes are selected, uncheck the GPT-4 checkbox
-    use_gpt4 = False
-    st.write("Selected GPT model: GPT-3.5")
-elif use_gpt4 and not use_gpt35:
-    # If GPT-4 checkbox is selected and GPT-3.5 checkbox is unchecked, check the GPT-3.5 checkbox
-    use_gpt35 = True
-    st.write("Selected GPT model: GPT-4")
-else:
-    # By default, GPT-3.5 checkbox is selected
-    st.write("Selected GPT model: GPT-3.5")
+gpt_model = st.radio("Select the GPT model:", ("GPT-3.5", "GPT-4"))
 
 # Create a file uploader for multiple files
 uploaded_files = st.file_uploader(
