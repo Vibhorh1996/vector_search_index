@@ -5,7 +5,8 @@ import json
 import pickle
 import requests
 import mimetypes
-# from bs4 import BeautifulSoup
+import subprocess
+from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit
 from langchain.agents import create_pandas_dataframe_agent
 from langchain.llms import OpenAI
@@ -19,6 +20,12 @@ from langchain.document_loaders import (
     UnstructuredWordDocumentLoader,
     WebBaseLoader,
 )
+
+# Define the path to your requirements.txt file
+requirements_file = 'requirements.txt'
+
+# Use pip to install the dependencies from the requirements.txt file
+subprocess.check_call(['pip', 'install', '-r', requirements_file])
 
 # Setting page title and header
 st.set_page_config(page_title="Data Chat", page_icon=':robot_face:')
