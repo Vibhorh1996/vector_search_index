@@ -5,7 +5,7 @@ import json
 import pickle
 import requests
 import mimetypes
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit
 from langchain.agents import create_pandas_dataframe_agent
 from langchain.llms import OpenAI
