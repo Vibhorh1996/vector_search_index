@@ -20,6 +20,9 @@ st.markdown(
     "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index."
 )
 
+# Create checkboxes to select the GPT model
+gpt_model = st.radio("Select the GPT model:", ("GPT-3.5", "GPT-4"))
+
 # Function to get the OpenAI API key
 def get_openai_api_key():
     openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
@@ -29,9 +32,6 @@ def get_openai_api_key():
 
 # Get the OpenAI API key
 openai_api_key = get_openai_api_key()
-
-# Create checkboxes to select the GPT model
-gpt_model = st.radio("Select the GPT model:", ("GPT-3.5", "GPT-4"))
 
 # Create a file uploader for multiple files
 uploaded_files = st.file_uploader(
