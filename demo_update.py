@@ -85,12 +85,13 @@ if st.button("Search"):
     indexer = FaissIndexer.load_index("./tmp.index")  # Load the index and assign it to the indexer variable
 
     if indexer:  # Check if index was successfully loaded
-        st.markdown("**:blue[Loaded index from: tmp.index]**")
+        st.markdown('**:blue[Loaded index from: tmp.index]**')
         D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
 
-        # Display the search results
+        # Display the search results in a conversational chatbot format
         for i, result in enumerate(search_results):
-            st.write(f"Result {i+1}: {result}")
+            st.markdown(f"**Q: {query}**")
+            st.markdown(f"**A: {result}**")
             if i < len(search_results) - 1:  # Add a horizontal line if it's not the last result
                 st.markdown("---")
             # Display additional details about the search result if needed
