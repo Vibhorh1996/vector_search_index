@@ -8,3 +8,5 @@ huggingface_hub
 openai
 langchain
 streamlit_chat
+bs4
+BeautifulSoup
