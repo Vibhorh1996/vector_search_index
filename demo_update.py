@@ -98,18 +98,31 @@ if st.button("Search"):
         for i, result in enumerate(search_results):
             messages.append({"role": "assistant", "content": result})
 
-        # Generate responses using the OpenAI language model
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-        )
+        # Continue the chat until the user decides to stop
+        chat_active = True
+        while chat_active:
+            # Generate responses using the OpenAI language model
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+            )
 
-        # Extract the assistant's reply from the response
-        assistant_reply = response.choices[-1].message.content
+            # Extract the assistant's reply from the response
+            assistant_reply = response.choices[-1].message.content
 
-        # Display the assistant's reply
-        st.markdown(f"**Q: {query}**")
-        st.markdown(f"**A: {assistant_reply}**")
+            # Display the assistant's reply
+            st.markdown(f"**Q: {query}**")
+            st.markdown(f"**A: {assistant_reply}**")
 
+            # Ask the user if they want to continue the chat
+            user_response = st.radio("Do you want to continue the chat?", ("Yes", "No"))
+
+            if user_response == "Yes":
+                # Get the user's next message
+                user_message = st.text_input("Enter your next message:")
+                messages.append({"role": "user", "content": user_message})
+                query = user_message
+            else:
+                chat_active = False
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
