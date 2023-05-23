@@ -30,7 +30,18 @@ is_valid_key = False
 if openai_api_key:
     openai.api_key = openai_api_key
     try:
-        response = openai.Completion.create(engine="davinci-codex", prompt="Hello", max_tokens=5)
+        response = openai.Completion.create(
+            engine="davinci-codex",
+            prompt="Hello",
+            max_tokens=5,
+            temperature=0.3,
+            n=1,
+            stop=None,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            log_level="info"
+        )
         is_valid_key = True
     except Exception as e:
         is_valid_key = False
@@ -46,7 +57,7 @@ if is_valid_key:
     use_gpt4 = st.checkbox("Use GPT-4")
 
     # Determine the selected GPT model
-    selected_model = "GPT-3.5" if use_gpt35 else "GPT-4"
+    selected_model = "gpt-3.5-turbo" if use_gpt35 else "gpt-4.0-turbo"
     st.write(f"Selected GPT model: {selected_model}")
 
     # Create a file uploader for multiple files
@@ -93,11 +104,6 @@ if is_valid_key:
 
     # Function to send a user message and get a model-generated response
     def get_model_response(message):
-        if use_gpt35:
-            model_name = "gpt-3.5-turbo"
-        elif use_gpt4:
-            model_name = "gpt-4.0-turbo"
-
         prompt = f"User: {message}\nAI:"
         chat_history.append(prompt)
 
@@ -109,7 +115,7 @@ if is_valid_key:
             top_p=1.0,
             frequency_penalty=0.0,
             presence_penalty=0.0,
-            model=model_name,
+            model=selected_model,
         )
 
         model_reply = response.choices[0].text.strip().split("AI:")[-1].strip()
