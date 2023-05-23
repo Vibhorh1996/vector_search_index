@@ -1,5 +1,7 @@
 - bzip2=1.0.8=h1de35cc_0
+- beautifulsoup4==4.12.2
 - ca-certificates=2023.01.10=hecd8cb5_0
+- langchain==0.0.113
 - libffi=3.4.2=hecd8cb5_6
 - ncurses=6.4=hcec6c5f_0
 - openssl=1.1.1t=hca72f7f_0
