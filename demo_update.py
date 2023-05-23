@@ -14,29 +14,25 @@ This is a Streamlit-based application that works as a frontend for building a ve
 # Set page title and header using Streamlit Markdown
 # st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
 st.markdown("# PDF Parser and Search")
-st.markdown(
-    "Upload one or more PDF files and click the 'Parse' button to parse them and dump the extracted data as JSON. "
-    "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
-    "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index."
-)
+st.markdown("Upload one or more PDF files and click the 'Parse' button to parse them and dump the extracted data as JSON. "
+            "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
+            "Finally, enter a search query and page number (if applicable) and click the 'Search' button to perform a search on the Faiss index.")
+
+# Set the OpenAI API key using Streamlit text input
+openai_api_key = st.text_input("Enter your OpenAI API key:")
+if not openai_api_key:
+    st.warning("Please enter your OpenAI API key to proceed.")
 
 # Create checkboxes to select the GPT model
-gpt_model = st.radio("Select the GPT model:", ("GPT-3.5", "GPT-4"))
+use_gpt35 = st.checkbox("Use GPT-3.5", value=True)
+use_gpt4 = st.checkbox("Use GPT-4")
 
-# Function to get the OpenAI API key
-def get_openai_api_key():
-    openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
-    if not openai_api_key:
-        st.warning("Please enter your OpenAI API key to proceed.")
-    return openai_api_key
-
-# Get the OpenAI API key
-openai_api_key = get_openai_api_key()
+# Determine the selected GPT model
+selected_model = "GPT-3.5" if use_gpt35 else "GPT-4"
+st.write(f"Selected GPT model: {selected_model}")
 
 # Create a file uploader for multiple files
-uploaded_files = st.file_uploader(
-    "Choose one or more PDF files", type="pdf", accept_multiple_files=True
-)
+uploaded_files = st.file_uploader("Choose one or more PDF files", type="pdf", accept_multiple_files=True)
 
 # Create a button to start parsing
 if st.button("Parse"):
@@ -68,30 +64,42 @@ if st.button("Parse"):
 # Create a button to build the Faiss index
 if st.button("Build Index"):
     # Define the list of JSON files to index
-    json_files = [str(Path(file.name).stem) + ".json" for file in uploaded_files]
+    json_files = [str(Path(file.name).stem) + '.json' for file in uploaded_files]
 
     # Create a Faiss indexer object and build the index
     indexer = FaissIndexer(json_files)
     indexer.build_index()
 
     if indexer:
-        indexer.save_index("./tmp.index")
+        indexer.save_index('./tmp.index')
         st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index]**")
 
 # Create a search query input box and search button
-query = st.text_input("Enter a search query:")
+query = st.text_area("Enter a search query:")
 if st.button("Search"):
+    # Extract the page number from the query
+    match = re.search(r'page (\d+)', query, re.IGNORECASE)
+    page_number = match.group(1) if match else None
+
+    # Remove the page number from the query
+    query = re.sub(r'page \d+', '', query, flags=re.IGNORECASE).strip()
+
     # Search the index using the query
-    indexer = FaissIndexer.load_index("./tmp.index")  # Load the index and assign it to the indexer variable
+    indexer = FaissIndexer.load_index('./tmp.index')  # Load the index and assign it to the indexer variable
 
     if indexer:  # Check if index was successfully loaded
         st.markdown('**:blue[Loaded index from: tmp.index]**')
         D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
 
-        # Display the search results in a conversational chatbot format
-        st.markdown(f"**Q: {query}**")
-        for i, result in enumerate(search_results):
-            st.markdown(result)
-        # Display additional details about the search result if needed
+        # Display the search results
+        if search_results:
+            result = search_results[0]  # Get the first result
+            st.write(f"Result: {result}")
+            if page_number:
+                st.write(f"Page Number: {page_number}")
+            st.markdown("---")
+            # Display additional details about the search result if needed
+        else:
+            st.write("No results found.")
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
