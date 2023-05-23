@@ -111,11 +111,28 @@ if st.button("Search"):
         # Extract the assistant's reply from the response
         assistant_reply = response.choices[0].message.content
 
-        # Display the search results and the assistant's reply
+        # Display the AI's response
         st.markdown(f"**Q: {query}**")
-        for i, result in enumerate(search_results):
-            st.markdown(result)
         st.markdown(f"**A: {assistant_reply}**")
+
+        # Get the user's follow-up question or response
+        user_follow_up = st.text_input("Your response:")
+
+        if user_follow_up:
+            # Add the user's follow-up to the conversation
+            messages.append({"role": "user", "content": user_follow_up})
+
+            # Generate the AI's response to the follow-up
+            response = openai.ChatCompletion.create(
+                model=gpt_model,
+                messages=messages,
+            )
+
+            # Extract the assistant's reply from the response
+            assistant_reply = response.choices[0].message.content
+
+            # Display the AI's response
+            st.markdown(f"**A: {assistant_reply}**")
 
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
