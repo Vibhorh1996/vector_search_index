@@ -20,10 +20,15 @@ st.markdown(
     "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index."
 )
 
-# Set the OpenAI API key using Streamlit text input
-openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
-if not openai_api_key:
-    st.warning("Please enter your OpenAI API key to proceed.")
+# Function to get the OpenAI API key
+def get_openai_api_key():
+    openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
+    if not openai_api_key:
+        st.warning("Please enter your OpenAI API key to proceed.")
+    return openai_api_key
+
+# Get the OpenAI API key
+openai_api_key = get_openai_api_key()
 
 # Create checkboxes to select the GPT model
 gpt_model = st.radio("Select the GPT model:", ("GPT-3.5", "GPT-4"))
@@ -85,7 +90,7 @@ if st.button("Search"):
 
         # Display the search results
         for i, result in enumerate(search_results):
-            st.write(f"Result {i + 1}: {result}")
+            st.write(f"Result {i+1}: {result}")
             if i < len(search_results) - 1:  # Add a horizontal line if it's not the last result
                 st.markdown("---")
             # Display additional details about the search result if needed
