@@ -19,7 +19,7 @@ st.markdown("Upload one or more PDF files and click the 'Parse' button to parse 
             "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index.")
 
 # Set the OpenAI API key using Streamlit text input
-openai_api_key = st.text_input("Enter your OpenAI API key:")
+openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
 if not openai_api_key:
     st.warning("Please enter your OpenAI API key to proceed.")
 
@@ -27,8 +27,8 @@ if not openai_api_key:
 use_gpt35 = st.checkbox("Use GPT-3.5", value=True)
 use_gpt4 = st.checkbox("Use GPT-4")
 
-# Determine the selected GPT model
-selected_model = "GPT-3.5" if use_gpt35 else "GPT-4"
+# Create radio buttons to select the GPT model
+selected_model = st.radio("Select GPT model:", options=["GPT-3.5", "GPT-4"])
 st.write(f"Selected GPT model: {selected_model}")
 
 # Create a file uploader for multiple files
