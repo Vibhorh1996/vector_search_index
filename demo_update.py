@@ -82,7 +82,7 @@ if st.button("Start Chatbot"):
                     # Display AI's reply
                     st.text_area("AI:", value=ai_reply, key=f"reply_{uploaded_file.name}_{time.time()}")
 
-                if st.button(f"End Chat ({uploaded_file.name})"):
+                if st.button(f"End Chat ({uploaded_file.name})", key=f"end_chat_{uploaded_file.name}"):
                     break
 
     else:
