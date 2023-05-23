@@ -3,7 +3,6 @@ import PyPDF2
 import streamlit as st
 from pathlib import Path
 import openai
-import time
 
 """
 This is a Streamlit-based application that allows users to ask questions to the AI based on uploaded PDF files.
@@ -57,7 +56,7 @@ if st.button("Start Chatbot"):
             while True:
                 user_query = st.text_input(
                     "User:",
-                    key=f"query_{uploaded_file.name}_{time.time()}"
+                    key=f"query_{uploaded_file.name}_{id(st)}"
                 )
                 if user_query:
                     # Add user query to the conversation
@@ -80,9 +79,9 @@ if st.button("Start Chatbot"):
                     messages.append({"role": "assistant", "content": ai_reply})
 
                     # Display AI's reply
-                    st.text_area("AI:", value=ai_reply, key=f"reply_{uploaded_file.name}_{time.time()}")
+                    st.text_area("AI:", value=ai_reply, key=f"reply_{uploaded_file.name}_{id(st)}")
 
-                if st.button(f"End Chat ({uploaded_file.name})", key=f"end_chat_{uploaded_file.name}"):
+                if st.button(f"End Chat ({uploaded_file.name})", key=f"end_chat_{uploaded_file.name}_{id(st)}"):
                     break
 
     else:
