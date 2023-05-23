@@ -1,213 +1,105 @@
-import streamlit as st
-import pandas as pd
-import os
+import re
 import json
-import pickle
-import requests
-import mimetypes
-import subprocess
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlsplit
-from langchain.agents import create_pandas_dataframe_agent
-from langchain.llms import OpenAI
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS as BaseFAISS
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
-from langchain.document_loaders import (
-    PyPDFLoader,
-    CSVLoader,
-    UnstructuredWordDocumentLoader,
-    WebBaseLoader,
-)
+import PyPDF2
+import streamlit as st
+from pathlib import Path
+import faiss
+from src.parse_document import PdfParser
+from src.indexer import FaissIndexer
 
-# Define the path to your requirements.txt file
-requirements_file = 'requirements.txt'
+"""
+This is a Streamlit-based application that works as a frontend for building a vector search index.
+"""
 
-# Use pip to install the dependencies from the requirements.txt file
-subprocess.check_call(['pip', 'install', '-r', requirements_file])
+# Set page title and header using Streamlit Markdown
+# st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
+st.markdown("# PDF Parser and Search")
+st.markdown("Upload one or more PDF files and click the 'Parse' button to parse them and dump the extracted data as JSON. "
+            "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
+            "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index.")
 
-# Setting page title and header
-st.set_page_config(page_title="Data Chat", page_icon=':robot_face:')
-st.markdown("<h1 stype='text-align:center;'>Data Chat</h1>", unsafe_allow_html=True)
-st.markdown("<h2 stype='text-align:center;'>A Chatbot for conversing with your data</h2>", unsafe_allow_html=True)
+# Set the OpenAI API key using Streamlit text input
+openai_api_key = st.text_input("Enter your OpenAI API key:")
+if not openai_api_key:
+    st.warning("Please enter your OpenAI API key to proceed.")
 
-# Set API Key
-key = st.text_input('OpenAI API Key', '', type='password')
-os.environ['OPENAPI_API_KEY'] = key
-os.environ['OPENAI_API_KEY'] = key
+# Create checkboxes to select the GPT model
+use_gpt35 = st.checkbox("Use GPT-3.5", value=True)
+use_gpt4 = st.checkbox("Use GPT-4")
 
-# Initialize session state variables
-if 'generated' not in st.session_state:
-    st.session_state['generated'] = []
+# Determine the selected GPT model
+selected_model = "GPT-3.5" if use_gpt35 else "GPT-4"
+st.write(f"Selected GPT model: {selected_model}")
 
-if 'past' not in st.session_state:
-    st.session_state['past'] = []
+# Create a file uploader for multiple files
+uploaded_files = st.file_uploader("Choose one or more PDF files", type="pdf", accept_multiple_files=True)
 
-if 'messages' not in st.session_state:
-    st.session_state['messages'] = [
-        {"role": "DataChat", "content": "You are a helpful bot."}
-    ]
+# Create a button to start parsing
+if st.button("Parse"):
+    if uploaded_files:
+        summaries = []  # Store summaries for each PDF file
+        for uploaded_file in uploaded_files:
+            # Create a PdfParser object for each uploaded file
+            pdf_parser = PdfParser(uploaded_file)
 
-if 'model_name' not in st.session_state:
-    st.session_state['model_name'] = []
+            # Parse the PDF file
+            pdf_parser.parse_pdf()
 
-if 'cost' not in st.session_state:
-    st.session_state['cost'] = []
+            # Write the extracted data to a JSON file with the same name as the PDF file
+            input_filename = Path(uploaded_file.name)
+            output_filename = input_filename.stem + ".json"
+            pdf_parser.write_json(output_filename)
 
-if 'total_tokens' not in st.session_state:
-    st.session_state['total_tokens'] = []
+            # Extract a short brief from the PDF
+            # Modify this section to extract the summary/brief from the parsed PDF
+            summary = "Summary: [Summary of the PDF in at most 50 words]"
+            summaries.append((input_filename, summary))
 
-if 'total_cost' not in st.session_state:
-    st.session_state['total_cost'] = 0.0
-
-
-class FAISS(BaseFAISS):
-    def save(self, file_path):
-        with open(file_path, "wb") as f:
-            pickle.dump(self, f)
-
-    @staticmethod
-    def load(file_path):
-        with open(file_path, "rb") as f:
-            return pickle.load(f)
-
-
-class URLHandler:
-    @staticmethod
-    def is_valid_url(url):
-        parsed_url = urlsplit(url)
-        return bool(parsed_url.scheme) and bool(parsed_url.netloc)
-
-    @staticmethod
-    def extract_links(url):
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        links = []
-        for link in soup.find_all('a'):
-            href = link.get('href')
-            if href:
-                absolute_url = urljoin(url, href)
-                if URLHandler.is_valid_url(absolute_url) and (
-                        absolute_url.startswith("http://") or absolute_url.startswith("https://")):
-                    links.append(absolute_url)
-
-        return links
-
-    @staticmethod
-    def extract_links_from_websites(websites):
-        all_links = []
-
-        for website in websites:
-            links = URLHandler.extract_links(website)
-            all_links.extend(links)
-
-        return all_links
-
-
-def save_uploadedfile(uploadedfile):
-    with open(os.path.join("data/dataset", uploadedfile.name), "wb") as f:
-        f.write(uploadedfile.getbuffer())
-    return "data/dataset/" + uploadedfile.name
-
-
-def train_or_load_model(documents, model_name):
-    st.write(f"Training or loading FAISS index using {model_name} model...")
-    loader = UnstructuredWordDocumentLoader(documents)
-    embeddings = OpenAIEmbeddings()
-    agent = create_pandas_dataframe_agent(ChatOpenAI, model_name, embeddings, documents)
-    agent.set_custom_encoder_from_loader(loader)
-
-    if st.button("Train"):
-        agent.train(epochs=1, num_gpu=0)
-        agent.save()
+            # Display a success message
+            st.success(f"Extracted data from {input_filename} has been written to {output_filename}.")
     else:
-        agent.load()
+        # Display an error message if no file was uploaded
+        st.error("Please upload one or more PDF files.")
 
-    vector_store = FAISS()
-    vector_store.load_agent(agent)
-    vector_store.save("data/faiss_index.faiss")
+# Create a button to build the Faiss index
+if st.button("Build Index"):
+    # Define the list of JSON files to index
+    json_files = [str(Path(file.name).stem) + '.json' for file in uploaded_files]
 
-    st.write("FAISS index has been trained and saved.")
+    # Create a Faiss indexer object and build the index
+    indexer = FaissIndexer(json_files)
+    indexer.build_index()
 
+    if indexer:
+        indexer.save_index('./tmp.index')
+        st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index]**")
 
-def answer_questions(query, model_name):
-    agent = create_pandas_dataframe_agent(ChatOpenAI, model_name, embeddings, documents)
-    agent.load()
-    vector_store = FAISS.load("data/faiss_index.faiss")
-    vector_store.load_agent(agent)
+# Create a search query input box and search button
+query = st.text_input("Enter a search query:")
+if st.button("Search"):
+    # Search the index using the query
+    indexer = FaissIndexer.load_index('./tmp.index')  # Load the index and assign it to the indexer variable
 
-    answers = vector_store.query(query)
-    return answers
+    if indexer:  # Check if index was successfully loaded
+        st.markdown('**:blue[Loaded index from: tmp.index]**')
+        D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
 
-
-# Sidebar
-st.sidebar.header('Data Chat Configuration')
-
-# Model selection
-st.sidebar.subheader('Select a Model')
-model_name = st.sidebar.radio("Model", ("GPT-3.5", "GPT-4"))
-st.session_state['model_name'] = model_name
-
-# Clear conversation history
-if st.sidebar.button('Clear Conversation'):
-    st.session_state['messages'] = []
-    st.session_state['total_tokens'] = 0
-    st.session_state['total_cost'] = 0.0
-
-# Main content
-st.subheader('Conversation')
-
-# Upload PDF files
-uploaded_files = st.file_uploader('Upload PDF files', type=["pdf"], accept_multiple_files=True)
-documents = []
-
-if uploaded_files:
-    for uploaded_file in uploaded_files:
-        document_path = save_uploadedfile(uploaded_file)
-        documents.append(document_path)
-
-# Train or load model
-if documents:
-    train_or_load_model(documents, model_name)
-
-# User input and response generation
-user_input = st.text_area("User Input")
-
-if st.button("Submit"):
-    # Add user message to history
-    st.session_state['messages'].append({"role": "user", "content": user_input})
-
-    # Generate response using the selected model
-    if model_name == "GPT-3.5":
-        api_key = os.getenv('OPENAPI_API_KEY')
-        openai = OpenAI(api_key=api_key, gpt_version='gpt-3.5-turbo')
-        response = openai.complete_prompt(prompt=user_input)
+        # Display the search results
+        for i, result in enumerate(search_results):
+            st.write(f"Result {i+1}: {result}")
+            if i < len(search_results) - 1:  # Add a horizontal line if it's not the last result
+                st.markdown("---")
+            # Display additional details about the search result if needed
     else:
-        response = "This feature is only available with GPT-3.5 model."
+        st.error("Failed to load index. Please make sure the index has been built.")
 
-    # Add model-generated response to history
-    st.session_state['messages'].append({"role": "model", "content": response})
+# # Create a checkbox to show summaries
+# show_summaries = st.checkbox("Show Summaries")
 
-    # Calculate and update the token count and cost
-    response_tokens = len(response.split())
-    total_tokens = st.session_state['total_tokens'] + response_tokens
-    st.session_state['total_tokens'] = total_tokens
-    cost_per_token = 0.006 if model_name == "GPT-3.5" else 0.008
-    response_cost = response_tokens * cost_per_token
-    total_cost = st.session_state['total_cost'] + response_cost
-    st.session_state['total_cost'] = total_cost
-
-# Display chat history
-for message in st.session_state['messages']:
-    if message["role"] == "user":
-        st.write(f"User: {message['content']}")
-    elif message["role"] == "model":
-        st.write(f"Model: {message['content']}")
-
-# Display cost and token count
-st.subheader("Cost and Token Count")
-st.write(f"Total Tokens: {st.session_state['total_tokens']} tokens")
-st.write(f"Total Cost: ${st.session_state['total_cost']}")
-
+# # Display summaries when checkbox is checked
+# if show_summaries and uploaded_files:
+#     for i, (input_filename, summary) in enumerate(summaries):
+#         st.write(f"PDF: {input_filename}")
+#         st.write(summary)
+#         if i < len(uploaded_files) - 1:  # Add a horizontal line if it's not the last file
+#             st.markdown("---")
