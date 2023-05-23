@@ -1,7 +1,5 @@
 - bzip2=1.0.8=h1de35cc_0
-- beautifulsoup4==4.12.2
 - ca-certificates=2023.01.10=hecd8cb5_0
-- langchain==0.0.113
 - libffi=3.4.2=hecd8cb5_6
 - ncurses=6.4=hcec6c5f_0
 - openssl=1.1.1t=hca72f7f_0
@@ -18,6 +16,7 @@
   - async-timeout==4.0.2
   - attrs==22.2.0
   - beautifulsoup==4.12.2
+  - bs4
   - cachetools==5.3.0
   - certifi==2022.12.7
   - charset-normalizer==3.1.0
