@@ -22,7 +22,7 @@ st.markdown(
 )
 
 # Create checkboxes to select the GPT model
-gpt_model = st.radio("Select the GPT model:", ("GPT-3.5", "GPT-4"))
+gpt_model = st.radio("Select the GPT model:", ("gpt-3.5-turbo", "GPT-4"))
 
 # Function to get the OpenAI API key
 def get_openai_api_key():
