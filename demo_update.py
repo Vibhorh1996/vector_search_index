@@ -13,11 +13,12 @@ This is a Streamlit-based application that works as a frontend for building a ve
 """
 
 # Set page title and header using Streamlit Markdown
-# st.set_page_config(page_title="PDF Parser and Search", page_icon=":mag:", layout="centered")
 st.markdown("# PDF Parser and Search")
-st.markdown("Upload one or more PDF files and click the 'Parse' button to parse them and dump the extracted data as JSON. "
-            "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
-            "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index.")
+st.markdown(
+    "Upload one or more PDF files and click the 'Parse' button to parse them and dump the extracted data as JSON. "
+    "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
+    "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index."
+)
 
 # Set the OpenAI API key using Streamlit text input
 openai_api_key = st.text_input("Enter your OpenAI API key:")
@@ -29,7 +30,7 @@ is_valid_key = False
 if openai_api_key:
     openai.api_key = openai_api_key
     try:
-        response = openai.Completion.create(engine="davinci", prompt="Hello", max_tokens=5)
+        response = openai.Completion.create(engine="davinci-codex", prompt="Hello", max_tokens=5)
         is_valid_key = True
     except Exception as e:
         is_valid_key = False
@@ -67,11 +68,6 @@ if is_valid_key:
                 output_filename = input_filename.stem + ".json"
                 pdf_parser.write_json(output_filename)
 
-                # Extract a short brief from the PDF
-                # Modify this section to extract the summary/brief from the parsed PDF
-                summary = "Summary: [Summary of the PDF in at most 50 words]"
-                summaries.append((input_filename, summary))
-
                 # Display a success message
                 st.success(f"Extracted data from {input_filename} has been written to {output_filename}.")
         else:
@@ -90,6 +86,46 @@ if is_valid_key:
         if indexer:
             indexer.save_index('./tmp.index')
             st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index]**")
+
+    # Create a chat interface
+    st.subheader("Chat with the AI")
+    chat_history = []
+
+    # Function to send a user message and get a model-generated response
+    def get_model_response(message):
+        if use_gpt35:
+            model_name = "gpt-3.5-turbo"
+        elif use_gpt4:
+            model_name = "gpt-4.0-turbo"
+
+        prompt = f"User: {message}\nAI:"
+        chat_history.append(prompt)
+
+        response = openai.Completion.create(
+            engine="davinci-codex",
+            prompt="\n".join(chat_history),
+            temperature=0.7,
+            max_tokens=150,
+            top_p=1.0,
+            frequency_penalty=0.0,
+            presence_penalty=0.0,
+            model=model_name,
+        )
+
+        model_reply = response.choices[0].text.strip().split("AI:")[-1].strip()
+        chat_history.append(f"AI: {model_reply}")
+        return model_reply
+
+    # Create a text input box for the user to enter messages
+    user_input = st.text_input("You", "")
+
+    if st.button("Send"):
+        if user_input:
+            # Get model-generated response and display it
+            model_response = get_model_response(user_input)
+            st.write("AI:", model_response)
+        else:
+            st.warning("Please enter a message.")
 
     # Create a search query input box and search button
     query = st.text_input("Enter a search query:")
