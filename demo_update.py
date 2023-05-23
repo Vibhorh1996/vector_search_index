@@ -94,10 +94,6 @@ if st.button("Search"):
             {"role": "user", "content": query},
         ]
 
-        # Iterate over the search results and add them to the conversation
-        for i, result in enumerate(search_results):
-            messages.append({"role": "assistant", "content": result})
-
         # Continue the chat until the user decides to stop
         chat_active = True
         while chat_active:
@@ -115,9 +111,9 @@ if st.button("Search"):
             st.markdown(f"**A: {assistant_reply}**")
 
             # Ask the user if they want to continue the chat
-            user_response = st.radio("Do you want to continue the chat?", ("Yes", "No"))
+            continue_chat = st.radio("Continue the chat?", ("Yes", "No"))
 
-            if user_response == "Yes":
+            if continue_chat == "Yes":
                 # Get the user's next message
                 user_message = st.text_input("Enter your next message:")
                 messages.append({"role": "user", "content": user_message})
