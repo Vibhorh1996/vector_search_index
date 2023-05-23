@@ -89,11 +89,9 @@ if st.button("Search"):
         D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
 
         # Display the search results in a conversational chatbot format
+        st.markdown(f"**Q: {query}**")
         for i, result in enumerate(search_results):
-            st.markdown(f"**Q: {query}**")
-            st.markdown(f"**A: {result}**")
-            if i < len(search_results) - 1:  # Add a horizontal line if it's not the last result
-                st.markdown("---")
-            # Display additional details about the search result if needed
+            st.markdown(result)
+        # Display additional details about the search result if needed
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
