@@ -1,4 +1,3 @@
-import re
 import json
 import PyPDF2
 import streamlit as st
@@ -20,22 +19,6 @@ st.markdown(
     "Then, click the 'Build Index' button to create a Faiss index from the generated JSON files. "
     "Finally, enter a search query and click the 'Search' button to perform a search on the Faiss index."
 )
-
-# Create checkboxes to select the GPT model
-gpt_model = st.radio("Select the GPT model:", ("gpt-3.5-turbo", "GPT-4"))
-
-# Function to get the OpenAI API key
-def get_openai_api_key():
-    openai_api_key = st.text_input("Enter your OpenAI API key:", type="password")
-    if not openai_api_key:
-        st.warning("Please enter your OpenAI API key to proceed.")
-    return openai_api_key
-
-# Get the OpenAI API key
-openai_api_key = get_openai_api_key()
-
-# Initialize the OpenAI API
-openai.api_key = openai_api_key
 
 # Create a file uploader for multiple files
 uploaded_files = st.file_uploader(
@@ -104,35 +87,16 @@ if st.button("Search"):
 
         # Generate responses using the OpenAI language model
         response = openai.ChatCompletion.create(
-            model=gpt_model,
+            model="gpt-3.5-turbo",
             messages=messages,
         )
 
         # Extract the assistant's reply from the response
-        assistant_reply = response.choices[0].message.content
+        assistant_reply = response.choices[-1].message.content
 
-        # Display the AI's response
+        # Display the assistant's reply
         st.markdown(f"**Q: {query}**")
         st.markdown(f"**A: {assistant_reply}**")
-
-        # Get the user's follow-up question or response
-        user_follow_up = st.text_input("Your response:")
-
-        if user_follow_up:
-            # Add the user's follow-up to the conversation
-            messages.append({"role": "user", "content": user_follow_up})
-
-            # Generate the AI's response to the follow-up
-            response = openai.ChatCompletion.create(
-                model=gpt_model,
-                messages=messages,
-            )
-
-            # Extract the assistant's reply from the response
-            assistant_reply = response.choices[0].message.content
-
-            # Display the AI's response
-            st.markdown(f"**A: {assistant_reply}**")
 
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
