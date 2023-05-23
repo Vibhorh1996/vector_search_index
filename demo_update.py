@@ -94,11 +94,9 @@ if st.button("Search"):
         # Display the search results
         if search_results:
             result = search_results[0]  # Get the first result
-            st.write(f"Result: {result}")
+            st.write(f"Answer: {result}")
             if page_number:
                 st.write(f"Page Number: {page_number}")
-            st.markdown("---")
-            # Display additional details about the search result if needed
         else:
             st.write("No results found.")
     else:
