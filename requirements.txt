@@ -7,3 +7,5 @@ PyPDF2
 sentence-transformers
 huggingface_hub
 openai
+langchain
+streamlit_chat
