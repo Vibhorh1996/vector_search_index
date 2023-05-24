@@ -76,7 +76,6 @@ if st.button("Build Index"):
 
 # Create a search query input box and search button
 search_query = st.text_input("Enter a search query:")
-
 if st.button("Search"):
     if search_query:
         # Search the index using the query
@@ -94,53 +93,54 @@ if st.button("Search"):
             information = "\n".join(search_results_list)
 
             if information:
-                st.write("Understood. You may now ask your question.")
-
                 # Initialize conversation variables
                 current_topic = True  # Flag to track if the conversation is within the current topic
+                continue_topic = "<Select option>"
 
                 # Conversation loop
                 while True:
-                    question = st.text_input("Ask your question:", value=search_query)
-
-                    if question:
-                        # Check if the question is relevant to the given information
-                        if not current_topic:
-                            st.write("Please ask questions relevant to the given information only.")
-                            continue
-
-                        # Get AI-generated answer
-                        answer = "AI-generated answer based on the provided information."
-                        st.write("Answer:", answer)
-
-                        # Prompt for further conversation or new query
-                        continue_topic = st.selectbox("Do you have any other questions on this topic?", ["Yes", "No"])
-
-                        if continue_topic.lower() == "yes":
-                            conversation_type = st.selectbox("Continue with this topic or new query?", ["Current", "New"])
-
-                            if conversation_type.lower() == "current":
+                    if continue_topic == "<Select option>":
+                        continue_topic = st.selectbox("Do you have any other questions on this topic?",
+                                                      options=["<Select option>", "Yes", "No"])
+                    elif continue_topic == "Yes":
+                        conversation_type = st.selectbox("Continue with this topic or new query?",
+                                                         options=["<Select option>", "Current", "New"])
+                        if conversation_type == "Current":
+                            # Display the user's original question as reference
+                            st.write("Original question:", search_query)
+                        elif conversation_type == "New":
+                            st.write("Understood. Please provide me with a new set of information.")
+                            search_query = st.text_input("Enter a new search query:")
+                            if search_query:
                                 st.write("Understood. You may now ask your question.")
-                                continue
-                            elif conversation_type.lower() == "new":
-                                st.write("Understood. Please provide me with a new set of information.")
-                                search_query = st.text_input("Enter a new search query:")
-                                if search_query:
-                                    st.write("Understood. You may now ask your question.")
-                                    current_topic = True
-                                else:
-                                    st.warning("Please enter a new search query to proceed.")
-                                    current_topic = False
+                                current_topic = True
+                                continue_topic = "<Select option>"
                             else:
-                                st.warning("Invalid conversation type. Please select 'Current' or 'New'.")
+                                st.warning("Please enter a new search query to proceed.")
                                 current_topic = False
-                        elif continue_topic.lower() == "no":
-                            st.write("Hope you got the answer you were looking for.")
-                            break
                         else:
-                            st.warning("Invalid response. Please select 'Yes' or 'No'.")
+                            st.warning("Invalid conversation type. Please select 'Current' or 'New'.")
+                            current_topic = False
+                    elif continue_topic == "No":
+                        st.write("Hope you got the answer you were looking for.")
+                        break
                     else:
-                        st.warning("Please ask a question to proceed.")
+                        st.warning("Invalid response. Please select an option.")
+
+                    if continue_topic in ["Yes", "No"]:
+                        question = st.text_input("Ask your question:", value=search_query)
+
+                        if question:
+                            # Check if the question is relevant to the given information
+                            if not current_topic:
+                                st.write("Please ask questions relevant to the given information only.")
+                                continue
+
+                            # Get AI-generated answer based on the provided information
+                            answer = "AI-generated answer based on the provided information."
+                            st.write("Answer:", answer)
+                        else:
+                            st.warning("Please ask a question to proceed.")
         else:
             st.error("Failed to load index. Please make sure the index has been built.")
     else:
