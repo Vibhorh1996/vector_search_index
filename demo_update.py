@@ -85,18 +85,18 @@ if st.button("Search"):
         if query:
             D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
 
-            # Display the search results
-            for i, result in enumerate(search_results):
-                st.write(f"Result {i+1}: {result}")
-                if i < len(search_results) - 1:  # Add a horizontal line if it's not the last result
-                    st.markdown("---")
-                # Display additional details about the search result if needed
+            # Get the search results as a list of strings
+            search_results_list = [str(result) for result in search_results]
 
-            # Get user-provided information
-            information = st.text_input("Provide me with the information on which you want to ask questions on:")
+            # Pass the search results as input to the user-provided information
+            information = st.text_input("Provide me with the information on which you want to ask questions on:",
+                                        value="\n".join(search_results_list),
+                                        key="user_information")
+
             if information:
                 st.write("Understood. You may now ask your question.")
 
+                # Rest of the code for the conversation loop...
                 # Initialize conversation variables
                 current_topic = True  # Flag to track if the conversation is within the current topic
 
@@ -136,7 +136,7 @@ if st.button("Search"):
                                 st.warning("Invalid conversation type. Please select 'Current' or 'New'.")
                                 current_topic = False
                         elif continue_topic.lower() == "no":
-                            st.write("Hope you got the answer which you were looking for.")
+                            st.write("Hope you got the answer you were looking for.")
                             break
                         else:
                             st.warning("Invalid response. Please select 'Yes' or 'No'.")
