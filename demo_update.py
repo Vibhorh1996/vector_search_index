@@ -75,34 +75,33 @@ if st.button("Build Index"):
         st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index]**")
 
 # Create a search query input box and search button
-search_query = st.text_input("Enter your search query:")
-if st.button("Search"):
-    # Search the index using the query
-    indexer = FaissIndexer.load_index('./tmp.index')  # Load the index and assign it to the indexer variable
+search_query = st.text_input("Enter a search query:")
 
-    if indexer:  # Check if index was successfully loaded
-        st.markdown('**:blue[Loaded index from: tmp.index]**')
-        if search_query:
+if st.button("Search"):
+    if search_query:
+        # Search the index using the query
+        indexer = FaissIndexer.load_index('./tmp.index')  # Load the index and assign it to the indexer variable
+
+        if indexer:  # Check if index was successfully loaded
+            st.markdown('**:blue[Loaded index from: tmp.index]**')
+
             D, I, search_results = indexer.search_index(search_query)  # Get distances, indices, and search results
 
             # Get the search results as a list of strings
             search_results_list = [str(result) for result in search_results]
 
             # Pass the search results as input to the user-provided information
-            information = st.text_input("Provide me with the information on which you want to ask questions on:",
-                                        value="\n".join(search_results_list),
-                                        key="user_information")
+            information = "\n".join(search_results_list)
 
             if information:
                 st.write("Understood. You may now ask your question.")
 
-                # Rest of the code for the conversation loop...
                 # Initialize conversation variables
                 current_topic = True  # Flag to track if the conversation is within the current topic
 
                 # Conversation loop
                 while True:
-                    question = st.text_input("Ask your question:")
+                    question = st.text_input("Ask your question:", value=search_query)
 
                     if question:
                         # Check if the question is relevant to the given information
@@ -125,12 +124,12 @@ if st.button("Search"):
                                 continue
                             elif conversation_type.lower() == "new":
                                 st.write("Understood. Please provide me with a new set of information.")
-                                information = st.text_input("Provide new information:")
-                                if information:
+                                search_query = st.text_input("Enter a new search query:")
+                                if search_query:
                                     st.write("Understood. You may now ask your question.")
                                     current_topic = True
                                 else:
-                                    st.warning("Please provide new information to proceed.")
+                                    st.warning("Please enter a new search query to proceed.")
                                     current_topic = False
                             else:
                                 st.warning("Invalid conversation type. Please select 'Current' or 'New'.")
@@ -143,17 +142,6 @@ if st.button("Search"):
                     else:
                         st.warning("Please ask a question to proceed.")
         else:
-            st.warning("Please enter a search query to proceed.")
+            st.error("Failed to load index. Please make sure the index has been built.")
     else:
-        st.error("Failed to load index. Please make sure the index has been built.")
-
-# # Create a checkbox to show summaries
-# show_summaries = st.checkbox("Show Summaries")
-
-# # Display summaries when checkbox is checked
-# if show_summaries and uploaded_files:
-#     for i, (input_filename, summary) in enumerate(summaries):
-#         st.write(f"PDF: {input_filename}")
-#         st.write(summary)
-#         if i < len(uploaded_files) - 1:  # Add a horizontal line if it's not the last file
-#             st.markdown("---")
+        st.warning("Please enter a search query to proceed.")
