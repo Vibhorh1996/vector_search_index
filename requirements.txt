@@ -3,3 +3,4 @@ PyMuPDF
 faiss-cpu
 PyPDF2
 sentence_transformers
+openai
