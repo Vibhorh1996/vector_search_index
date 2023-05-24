@@ -75,15 +75,15 @@ if st.button("Build Index"):
         st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index]**")
 
 # Create a search query input box and search button
+search_query = st.text_input("Enter your search query:")
 if st.button("Search"):
     # Search the index using the query
     indexer = FaissIndexer.load_index('./tmp.index')  # Load the index and assign it to the indexer variable
 
     if indexer:  # Check if index was successfully loaded
         st.markdown('**:blue[Loaded index from: tmp.index]**')
-        query = st.text_input("Enter a search query:")
-        if query:
-            D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
+        if search_query:
+            D, I, search_results = indexer.search_index(search_query)  # Get distances, indices, and search results
 
             # Get the search results as a list of strings
             search_results_list = [str(result) for result in search_results]
