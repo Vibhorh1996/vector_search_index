@@ -72,7 +72,7 @@ if st.button("Build Index"):
 
     if indexer:
         indexer.save_index('./tmp.index')
-        st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index ]**")
+        st.markdown("**:blue[ Faiss index built and saved successfully at tmp.index ]**")
     else:
         st.error("Failed to build the index. Please make sure the JSON files are parsed correctly.")
 
@@ -97,18 +97,21 @@ if st.button("Search"):
             if information:
                 # Initialize conversation variables
                 current_topic = True  # Flag to track if the conversation is within the current topic
-                continue_topic = "<Select option>"
+                continue_topic_key = "continue_topic"
 
                 # Conversation loop
                 while True:
-                    if continue_topic == "<Select option>":
+                    if st.session_state[continue_topic_key] == "<Select option>":
                         continue_topic = st.selectbox("Do you have any other questions on this topic?",
                                                       options=["<Select option>", "Yes", "No"],
-                                                      key="continue_topic")
-                    elif continue_topic == "Yes":
+                                                      key=continue_topic_key)
+                    elif st.session_state[continue_topic_key] == "Yes":
+                        conversation_type_key = "conversation_type"
+                        if st.session_state[conversation_type_key] is None:
+                            st.session_state[conversation_type_key] = "<Select option>"
                         conversation_type = st.selectbox("Continue with this topic or new query?",
                                                          options=["<Select option>", "Current", "New"],
-                                                         key="conversation_type")
+                                                         key=conversation_type_key)
                         if conversation_type == "Current":
                             # Display the user's original question as reference
                             st.write("Original question:", search_query)
@@ -118,20 +121,20 @@ if st.button("Search"):
                             if search_query:
                                 st.write("Understood. You may now ask your question.")
                                 current_topic = True
-                                continue_topic = "<Select option>"
+                                st.session_state[continue_topic_key] = "<Select option>"
                             else:
                                 st.warning("Please enter a new search query to proceed.")
                                 current_topic = False
                         else:
                             st.warning("Invalid conversation type. Please select 'Current' or 'New'.")
                             current_topic = False
-                    elif continue_topic == "No":
+                    elif st.session_state[continue_topic_key] == "No":
                         st.write("Hope you got the answer you were looking for.")
                         break
                     else:
                         st.warning("Invalid response. Please select an option.")
 
-                    if continue_topic in ["Yes", "No"]:
+                    if st.session_state[continue_topic_key] in ["Yes", "No"]:
                         question = st.text_input("Ask your question:", value=search_query)
 
                         if question:
