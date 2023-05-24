@@ -72,9 +72,11 @@ if st.button("Build Index"):
 
     if indexer:
         indexer.save_index('./tmp.index')
-        st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index]**")
+        st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index ]**")
+    else:
+        st.error("Failed to build the index. Please make sure the JSON files are parsed correctly.")
 
-# Create a search query input box and search button
+# Create search functionality
 search_query = st.text_input("Enter a search query:")
 if st.button("Search"):
     if search_query:
@@ -101,10 +103,12 @@ if st.button("Search"):
                 while True:
                     if continue_topic == "<Select option>":
                         continue_topic = st.selectbox("Do you have any other questions on this topic?",
-                                                      options=["<Select option>", "Yes", "No"])
+                                                      options=["<Select option>", "Yes", "No"],
+                                                      key="continue_topic")
                     elif continue_topic == "Yes":
                         conversation_type = st.selectbox("Continue with this topic or new query?",
-                                                         options=["<Select option>", "Current", "New"])
+                                                         options=["<Select option>", "Current", "New"],
+                                                         key="conversation_type")
                         if conversation_type == "Current":
                             # Display the user's original question as reference
                             st.write("Original question:", search_query)
