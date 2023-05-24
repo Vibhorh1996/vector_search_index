@@ -4,7 +4,6 @@ import PyPDF2
 import streamlit as st
 from pathlib import Path
 import faiss
-import openai
 from src.parse_document import PdfParser
 from src.indexer import FaissIndexer
 
@@ -76,134 +75,85 @@ if st.button("Build Index"):
         st.markdown("**:blue[ Faiss index has been built and stored at: tmp.index]**")
 
 # Create a search query input box and search button
-query = st.text_input("Enter a search query:")
-
-# Check if the user has entered a query and the Faiss index exists
-if query and Path('./tmp.index').is_file():
-    # Load the Faiss index
-    indexer = FaissIndexer.load_index('./tmp.index')
+if st.button("Search"):
+    # Search the index using the query
+    indexer = FaissIndexer.load_index('./tmp.index')  # Load the index and assign it to the indexer variable
 
     if indexer:  # Check if index was successfully loaded
         st.markdown('**:blue[Loaded index from: tmp.index]**')
-        D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
+        query = st.text_input("Enter a search query:")
+        if query:
+            D, I, search_results = indexer.search_index(query)  # Get distances, indices, and search results
 
-        # Store the search results to be used in the conversation
-        conversation_info = {'query': query, 'search_results': search_results}
+            # Display the search results
+            for i, result in enumerate(search_results):
+                st.write(f"Result {i+1}: {result}")
+                if i < len(search_results) - 1:  # Add a horizontal line if it's not the last result
+                    st.markdown("---")
+                # Display additional details about the search result if needed
 
-        # Display the search results
-        for i, result in enumerate(search_results):
-            st.write(f"Result {i+1}: {result}")
-            if i < len(search_results) - 1:  # Add a horizontal line if it's not the last result
-                st.markdown("---")
-            # Display additional details about the search result if needed
+            # Get user-provided information
+            information = st.text_input("Provide me with the information on which you want to ask questions on:")
+            if information:
+                st.write("Understood. You may now ask your question.")
 
-        # Prompt the user for information
-        st.text("Provide me with the information on which you want to ask questions on:")
-        information = st.text_area("")
+                # Initialize conversation variables
+                current_topic = True  # Flag to track if the conversation is within the current topic
 
-        # Check if the user has provided information
-        if information:
-            st.text("Understood. You may now ask your question.")
+                # Conversation loop
+                while True:
+                    question = st.text_input("Ask your question:")
 
-            # Create a conversation list to store the user and AI responses
-            conversation = []
+                    if question:
+                        # Check if the question is relevant to the given information
+                        if not current_topic:
+                            st.write("Please ask questions relevant to the given information only.")
+                            continue
 
-            # Start the conversation loop
-            while True:
-                user_question = st.text_input("User:")
-                if user_question:
-                    # Add the user question to the conversation
-                    conversation.append(user_question)
+                        # Get AI-generated answer
+                        answer = "AI-generated answer based on the provided information."
+                        st.write("Answer:", answer)
 
-                    # Check if the user question is related to the provided information
-                    if user_question.strip().endswith("?") and information.lower() in user_question.lower():
-                        # Get the AI response based on the user question
-                        ai_response = get_ai_response(user_question, conversation_info, selected_model, openai_api_key)
+                        # Prompt for further conversation or new query
+                        continue_topic = st.selectbox("Do you have any other questions on this topic?", ["Yes", "No"])
 
-                        # Add the AI response to the conversation
-                        conversation.append(ai_response)
+                        if continue_topic.lower() == "yes":
+                            conversation_type = st.selectbox("Continue with this topic or new query?", ["Current", "New"])
 
-                        # Display the AI response
-                        st.text("AI:" + ai_response)
-
-                        # Check if the conversation should continue
-                        continue_conversation = st.selectbox("Do you have any other questions on this topic?", options=["Yes", "No"])
-
-                        if continue_conversation.lower() == "no":
-                            st.text("Hope you got the answer which you were looking for.")
+                            if conversation_type.lower() == "current":
+                                st.write("Understood. You may now ask your question.")
+                                continue
+                            elif conversation_type.lower() == "new":
+                                st.write("Understood. Please provide me with a new set of information.")
+                                information = st.text_input("Provide new information:")
+                                if information:
+                                    st.write("Understood. You may now ask your question.")
+                                    current_topic = True
+                                else:
+                                    st.warning("Please provide new information to proceed.")
+                                    current_topic = False
+                            else:
+                                st.warning("Invalid conversation type. Please select 'Current' or 'New'.")
+                                current_topic = False
+                        elif continue_topic.lower() == "no":
+                            st.write("Hope you got the answer which you were looking for.")
                             break
-
-                        # Check if the user wants to continue with the current topic or start a new query
-                        continue_topic = st.selectbox("Continue with this topic or new query?", options=["Current", "New"])
-
-                        if continue_topic.lower() == "new":
-                            st.text("Understood. Please provide me with a new set of information.")
-                            information = st.text_area("")
-                            conversation_info['search_results'] = []  # Clear the search results for the new information
-                            conversation = []  # Clear the conversation for the new information
-                            st.text("Understood. You may now ask your question.")
                         else:
-                            st.text("Understood. You may now ask your question.")
+                            st.warning("Invalid response. Please select 'Yes' or 'No'.")
                     else:
-                        st.text("Please ask questions relevant to the given information only.")
-                else:
-                    st.text("Please ask a question.")
-
+                        st.warning("Please ask a question to proceed.")
+        else:
+            st.warning("Please enter a search query to proceed.")
     else:
         st.error("Failed to load index. Please make sure the index has been built.")
-else:
-    st.text("Please enter a search query.")
 
-# Function to get AI response
-def get_ai_response(question, conversation_info, selected_model, openai_api_key):
-    context = f"Question: {question}\nInformation: {conversation_info['search_results']}"
-    prompt = f"<Chat GPT, i want you to act as a Conversational AI Expert wherein a user will ask you questions, based on some information which the user will provide you. You need to answer the questions ONLY based on the information provided by the user, in at most 100 words.\n\nUser Question: {question}\n\nAnswer:"
+# # Create a checkbox to show summaries
+# show_summaries = st.checkbox("Show Summaries")
 
-    # Send the prompt to OpenAI API to get the AI response
-    ai_response = generate_ai_response(prompt, context, selected_model, openai_api_key)
-
-    # Extract the answer from the AI response
-    answer = extract_answer(ai_response)
-
-    return answer
-
-# Function to generate AI response using OpenAI API
-def generate_ai_response(prompt, context, selected_model, openai_api_key):
-    # Set the GPT model name
-    model_name = "gpt-3.5-turbo" if selected_model == "GPT-3.5" else "gpt-4.0-turbo"
-
-    # Set the OpenAI API endpoint
-    api_endpoint = "https://api.openai.com/v1/engines/davinci-codex/completions" if model_name == "gpt-4.0-turbo" else "https://api.openai.com/v1/engines/davinci/completions"
-
-    # Set the OpenAI API headers
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {openai_api_key}"
-    }
-
-    # Set the OpenAI API data
-    data = {
-        "prompt": prompt,
-        "max_tokens": 100,
-        "temperature": 0.5,
-        "top_p": 1.0,
-        "n": 1,
-        "stop": None,
-        "context": context,
-    }
-
-    # Send the request to OpenAI API and get the response
-    response = requests.post(api_endpoint, headers=headers, json=data)
-    response_json = response.json()
-
-    # Extract the AI response from the API response
-    ai_response = response_json['choices'][0]['text']
-
-    return ai_response
-
-# Function to extract the answer from AI response
-def extract_answer(ai_response):
-    # Remove the prompt and leading/trailing whitespaces from the AI response
-    answer = ai_response.split("Answer:")[1].strip()
-
-    return answer
+# # Display summaries when checkbox is checked
+# if show_summaries and uploaded_files:
+#     for i, (input_filename, summary) in enumerate(summaries):
+#         st.write(f"PDF: {input_filename}")
+#         st.write(summary)
+#         if i < len(uploaded_files) - 1:  # Add a horizontal line if it's not the last file
+#             st.markdown("---")
