@@ -96,8 +96,10 @@ if st.button("Search"):
 
             if information:
                 # Initialize conversation variables
-                current_topic = True  # Flag to track if the conversation is within the current topic
+                # current_topic = True  # Flag to track if the conversation is within the current topic
                 continue_topic_key = "continue_topic"
+                if continue_topic_key not in st.session_state:
+                                st.session_state[continue_topic_key] = "<Select option>"
 
                 # Conversation loop
                 while True:
